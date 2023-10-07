@@ -1,5 +1,8 @@
 ﻿using Application;
+using CpfCnpjLibrary;
 using Domain.Model;
+
+namespace bancoFramework;
 
 internal class Program
 {
@@ -12,28 +15,61 @@ internal class Program
         var cliente = Identificacao();
         Menu(cliente);
     }
-
-    static Cliente Identificacao()
+        
+    private static Cliente Identificacao()
     {
+        var listaErros = new List<string>();
         var cliente = new Cliente();
 
-        Console.Write("Seu número de identificação: ");
-        cliente.Id = int.Parse(s: Console.ReadLine() ?? "");
+        do
+        {
+            listaErros.Clear();
+            
+            Console.Write("Seu número de identificação: ");
+            var id = Console.ReadLine() ?? "";
+            if (!int.TryParse(id, out var idInt))
+                listaErros.Add("Identificador não é válido");
+            else
+                cliente.Id = idInt;
 
-        Console.Write("Seu nome: ");
-        cliente.Nome = Console.ReadLine() ?? "";
+            Console.Write("Seu nome: ");
+            cliente.Nome = Console.ReadLine() ?? "";
+        
+            Console.Write("Seu CPF: ");
+            cliente.Cpf = Console.ReadLine() ?? "";
+            if(!Cpf.Validar(cliente.Cpf))
+                listaErros.Add("CPF digitado não é válido");
+            else
+                cliente.Cpf = Cpf.FormatarComPontuacao(cliente.Cpf);
+        
+            Console.Write("Seu saldo: ");
+            var saldo = Console.ReadLine() ?? "";
+            if (!float.TryParse(saldo, out var saldoFloat))
+                listaErros.Add("Saldo digitado não é válido");
+            else
+                cliente.Saldo = saldoFloat;
 
-        Console.Write("Seu CPF: ");
-        cliente.Cpf = Console.ReadLine() ?? "";
-        Console.Write("Seu saldo: ");
+            if (listaErros.Count == 0) continue;
+            Console.Clear();
+            Console.WriteLine("Erro(s) encontrado(s):");
+            foreach (var erro in listaErros)
+            {
+                Console.WriteLine($"  * {erro}");
+            }
+            Console.WriteLine("Precione qualquer tecla para continuar...");
+            Console.ReadKey();
+            Console.Clear();
+            Console.WriteLine("Preencha os dados nonvamente!");
 
-        cliente.Saldo = float.Parse(Console.ReadLine() ?? "0");
+
+        } while (listaErros.Count > 0);
+
         Console.Clear();
 
         return cliente;
     }
 
-    static void Menu(Cliente cliente)
+    private static void Menu(Cliente cliente)
     {
         string? opcao;
         do
