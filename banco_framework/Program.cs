@@ -1,22 +1,24 @@
 ﻿using Application;
 using CpfCnpjLibrary;
 using Domain.Model;
+using Repository;
 
 namespace bancoFramework;
 
 internal class Program
 {
-    private static void Main(string[] args)
+    private static async Task Main(string[] args)
     {
         Console.Clear();
         Console.WriteLine("Seja bem vindo ao banco Framework");
         Console.WriteLine("Por favor, identifique-se");
         Console.WriteLine("");
-        var cliente = Identificacao();
+        var cliente = await Identificacao();
+        
         Menu(cliente);
     }
         
-    private static Cliente Identificacao()
+    private static async Task<Cliente> Identificacao()
     {
         var listaErros = new List<string>();
         var cliente = new Cliente();
@@ -28,10 +30,16 @@ internal class Program
             Console.Write("Seu número de identificação: ");
             var id = Console.ReadLine() ?? "";
             if (!int.TryParse(id, out var idInt))
-                listaErros.Add("Identificador não é válido");
+            {
+                listaErros.Add("Identificador não é válido");    
+            }
             else
+            {
+                var returnedClient = await ClientRepository.GetCliente(idInt);
+                if (returnedClient != null) return returnedClient;
                 cliente.Id = idInt;
-
+            }
+            
             Console.Write("Seu nome: ");
             cliente.Nome = Console.ReadLine() ?? "";
         
@@ -40,7 +48,7 @@ internal class Program
             if(!Cpf.Validar(cliente.Cpf))
                 listaErros.Add("CPF digitado não é válido");
             else
-                cliente.Cpf = Cpf.FormatarComPontuacao(cliente.Cpf);
+                cliente.Cpf = Cpf.FormatarSemPontuacao(cliente.Cpf);
         
             Console.Write("Seu saldo: ");
             var saldo = Console.ReadLine() ?? "";
@@ -65,7 +73,9 @@ internal class Program
         } while (listaErros.Count > 0);
 
         Console.Clear();
-
+        
+        await ClientRepository.AddCliente(cliente);
+        
         return cliente;
     }
 
@@ -77,7 +87,8 @@ internal class Program
             Console.WriteLine($"Como posso ajudar {cliente.Nome}?");
             Console.WriteLine("1 - Depósito");
             Console.WriteLine("2 - Saque");
-            Console.WriteLine("3 - Sair");
+            Console.WriteLine("3 - Exibir saldo");
+            Console.WriteLine("4 - Sair");
             Console.Write("Opção: ");
             opcao = Console.ReadLine();
 
@@ -105,11 +116,19 @@ internal class Program
                     break;
                 case "3":
                     Console.Clear();
+                    Console.WriteLine("Saldo");
+                    Console.WriteLine("Seu saldo é: " + cliente.Saldo);
+                    Console.WriteLine("Precione qualquer tecla para continuar...");
+                    Console.ReadKey();
+                    Console.Clear();
+                    break;
+                case "4":
+                    Console.Clear();
                     break;
                 default:
                     Console.Clear();
                     break;
             }
-        } while (opcao != "3");
+        } while (opcao != "4");
     }
 }
